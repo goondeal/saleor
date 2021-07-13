@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import graphene
@@ -190,12 +190,13 @@ class AttributeAssignmentMixin:
         attr_values: AttrValuesInput,
     ):
         get_or_create = attribute.values.get_or_create
+        boolean = bool(attr_values.boolean)
         value, _ = get_or_create(
             attribute=attribute,
-            slug=slugify(f"{attribute.id}_{attr_values.boolean}", allow_unicode=True),
+            slug=slugify(f"{attribute.id}_{boolean}", allow_unicode=True),
             defaults={
-                "name": f"{attribute.name}: {'Yes' if attr_values.boolean else 'No'}",
-                "boolean": attr_values.boolean,
+                "name": f"{attribute.name}: {'Yes' if boolean else 'No'}",
+                "boolean": boolean,
             },
         )
         return (value,)

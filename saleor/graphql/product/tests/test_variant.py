@@ -3120,23 +3120,37 @@ def test_product_variant_bulk_create_empty_attribute(
 
 
 def test_product_variant_bulk_create_with_new_attribute_value(
-    staff_api_client, product, size_attribute, permission_manage_products
+    staff_api_client,
+    product,
+    size_attribute,
+    permission_manage_products,
+    boolean_attribute,
 ):
     product_variant_count = ProductVariant.objects.count()
-    attribute_value_count = size_attribute.values.count()
+    size_attribute_value_count = size_attribute.values.count()
+    boolean_attribute_value_count = boolean_attribute.values.count()
     size_attribute_id = graphene.Node.to_global_id("Attribute", size_attribute.pk)
+    boolean_attribute_id = graphene.Node.to_global_id("Attribute", boolean_attribute.pk)
     product_id = graphene.Node.to_global_id("Product", product.pk)
     attribute_value = size_attribute.values.last()
     variants = [
         {
             "sku": str(uuid4())[:12],
-            "attributes": [{"id": size_attribute_id, "values": [attribute_value.name]}],
+            "attributes": [
+                {"id": size_attribute_id, "values": [attribute_value.name]},
+                {"id": boolean_attribute_id, "boolean": None},
+            ],
         },
         {
             "sku": str(uuid4())[:12],
-            "attributes": [{"id": size_attribute_id, "values": ["Test-attribute"]}],
+            "attributes": [
+                {"id": size_attribute_id, "values": ["Test-attribute"]},
+                {"id": boolean_attribute_id, "boolean": True},
+            ],
         },
     ]
+
+    product.product_type.variant_attributes.add(boolean_attribute)
 
     variables = {"productId": product_id, "variants": variants}
     staff_api_client.user.user_permissions.add(permission_manage_products)
@@ -3148,7 +3162,8 @@ def test_product_variant_bulk_create_with_new_attribute_value(
     assert not data["errors"]
     assert data["count"] == 2
     assert product_variant_count + 2 == ProductVariant.objects.count()
-    assert attribute_value_count + 1 == size_attribute.values.count()
+    assert size_attribute_value_count + 1 == size_attribute.values.count()
+    assert boolean_attribute_value_count == boolean_attribute.values.count()
 
 
 def test_product_variant_bulk_create_variant_selection_and_other_attributes(
